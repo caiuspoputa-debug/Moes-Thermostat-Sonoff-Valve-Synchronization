@@ -10,7 +10,7 @@ CONF_MIRROR_FROST_TO_MOES = "mirror_frost_to_moes"
 
 # Used only as a fallback before the real OFF target has been observed.
 DEFAULT_FROST_TEMP = 7.0
-DEFAULT_MIRROR_FROST_TO_MOES = False
+DEFAULT_MIRROR_FROST_TO_MOES = True
 
 MODE_OFF = "off"
 MODE_HEAT = "heat"

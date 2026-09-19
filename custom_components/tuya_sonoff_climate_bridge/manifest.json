@@ -1,7 +1,7 @@
 {
   "domain": "tuya_sonoff_climate_bridge",
   "name": "Tuya ↔ Sonoff Climate Bridge",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "config_flow": true,
   "codeowners": [
     "@caiuspoputa-debug"

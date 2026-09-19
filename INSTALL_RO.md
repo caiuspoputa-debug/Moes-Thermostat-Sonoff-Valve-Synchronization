@@ -1,4 +1,4 @@
-# Instalare / Update – v0.2.2 TEST
+# Instalare / Update – v0.2.3 TEST
 
 ## Ce este nou
 
@@ -13,8 +13,8 @@
 ## Update prin HACS
 
 1. Publică fișierele acestei arhive în repository.
-2. Creează release/tag `v0.2.2`.
-3. În HACS actualizează integrarea la `v0.2.2`.
+2. Creează release/tag `v0.2.3`.
+3. În HACS actualizează integrarea la `v0.2.3`.
 4. Repornește Home Assistant.
 5. Intră la integrare → **Configure** și activează opțiunea de sincronizare vizuală dacă o dorești.
 
@@ -35,12 +35,12 @@ Testează în această ordine:
 6. Modifică frost target-ul Sonoff, de exemplu 7°C → 10°C, cât este OFF; confirmă că Moes îl oglindește doar vizual și că la pornire revine temperatura de lucru memorată.
 
 
-## Fix v0.2.2
+## Fix v0.2.3
 
 În v0.2.0 exista o problemă de ordine la oprirea inițiată din Sonoff:
 Moes era oprit, dar frost target-ul era încercat prea devreme.
 
-v0.2.2 face explicit:
+v0.2.3 face explicit:
 
 1. Sonoff devine OFF.
 2. Moes primește OFF.
@@ -55,3 +55,23 @@ Arhiva include iconul integrării în două locuri:
 
 - `icon.png` în rădăcina repo-ului
 - `custom_components/tuya_sonoff_climate_bridge/icon.png` în pachetul integrării
+
+
+## Fix v0.2.3
+
+Sincronizarea vizuală OFF este activată implicit.
+
+La oprire:
+1. se păstrează `working_target`;
+2. Moes primește frost target-ul Sonoff;
+3. Moes este trecut în OFF;
+4. integrarea verifică valoarea afișată;
+5. dacă valoarea nu este corectă, retransmite comanda de până la 3 ori.
+
+În Logs:
+- `OFF visual sync OK` = sincronizare reușită;
+- `OFF visual sync FAILED` = Moes/Tuya nu a acceptat valoarea.
+
+Brand inclus exact în structura:
+- `brand/icon.png`
+- `brand/icon@2x.png`

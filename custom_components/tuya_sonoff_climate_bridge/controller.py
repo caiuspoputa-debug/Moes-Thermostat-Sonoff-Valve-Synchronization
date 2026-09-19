@@ -621,12 +621,34 @@ class ClimateBridgeController:
         self,
         preferred_entity: str | None = None,
     ) -> None:
-        """Turn Moes OFF, wait for confirmation, then mirror Sonoff frost."""
+        """Turn Moes OFF and force the learned Sonoff frost value visually."""
+        frost = self._display_frost_target(preferred_entity)
+
+        moes_before = self.hass.states.get(self.thermostat)
+        if moes_before is None:
+            return
+
+        current_target = self._target(moes_before)
+        if (
+            current_target is not None
+            and moes_before.state == MODE_HEAT
+            and not self._is_any_known_frost(current_target)
+        ):
+            self._working_target = current_target
+            await self._save_state()
+
+        if self.mirror_frost_to_moes and frost is not None:
+            if moes_before.state != MODE_OFF:
+                _LOGGER.warning(
+                    "[%s] OFF visual sync: preloading Moes frost target %s°C "
+                    "before HVAC OFF",
+                    self.zone_name,
+                    frost,
+                )
+                await self._set_moes_target(frost)
+
         await self._set_moes_mode(MODE_OFF)
 
-        # Service completion does not always mean the entity state has already
-        # changed. Wait briefly for the actual OFF state before changing the
-        # visible target.
         deadline = monotonic() + 5.0
         while monotonic() < deadline:
             state = self.hass.states.get(self.thermostat)
@@ -634,18 +656,58 @@ class ClimateBridgeController:
                 break
             await asyncio.sleep(0.10)
 
-        if not self.mirror_frost_to_moes:
+        if not self.mirror_frost_to_moes or frost is None:
             return
         if self._desired_mode != MODE_OFF:
             return
 
-        frost = self._display_frost_target(preferred_entity)
-        if frost is None:
-            return
+        for attempt in range(1, 4):
+            state = self.hass.states.get(self.thermostat)
+            shown = self._target(state)
+            if state is not None and state.state == MODE_OFF and not self._different(
+                shown, frost
+            ):
+                _LOGGER.warning(
+                    "[%s] OFF visual sync OK: Moes OFF / %s°C",
+                    self.zone_name,
+                    shown,
+                )
+                return
 
-        # Moes is safe to receive a target while OFF. Mark this as expected so
-        # the visual frost value can never overwrite working_target.
-        await self._set_moes_target(frost)
+            _LOGGER.warning(
+                "[%s] OFF visual sync retry %s/3: Moes state=%s target=%s, "
+                "forcing frost=%s°C",
+                self.zone_name,
+                attempt,
+                None if state is None else state.state,
+                shown,
+                frost,
+            )
+            await self._set_moes_target(frost)
+            await asyncio.sleep(0.60)
+
+        state = self.hass.states.get(self.thermostat)
+        _LOGGER.error(
+            "[%s] OFF visual sync FAILED after retries: Moes state=%s "
+            "target=%s expected_frost=%s",
+            self.zone_name,
+            None if state is None else state.state,
+            self._target(state),
+            frost,
+        )
+
+    def _is_any_known_frost(self, value: float | None) -> bool:
+        """Return True if value matches any learned Sonoff frost target."""
+        if value is None:
+            return False
+        candidates = [
+            *self._frost_targets.values(),
+            self.frost_temp_fallback,
+        ]
+        return any(
+            abs(float(value) - float(candidate)) <= TARGET_TOLERANCE
+            for candidate in candidates
+        )
 
     async def _set_moes_mode(self, mode: str) -> None:
         state = self.hass.states.get(self.thermostat)
@@ -680,18 +742,9 @@ class ClimateBridgeController:
             return
         if self._desired_mode != MODE_OFF:
             return
-
-        frost = self._display_frost_target(preferred_entity)
-        if frost is None:
-            return
-
-        moes = self.hass.states.get(self.thermostat)
-        if moes is None or moes.state != MODE_OFF:
-            return
-
-        # This is intentionally a REAL Moes target write for visual sync.
-        # _expected_target prevents it from replacing working_target.
-        await self._set_moes_target(frost)
+        await self._set_moes_off_and_mirror_frost(
+            preferred_entity=preferred_entity
+        )
 
     def _display_frost_target(
         self, preferred_entity: str | None = None
