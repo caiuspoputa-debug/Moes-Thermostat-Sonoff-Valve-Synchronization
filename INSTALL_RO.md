@@ -75,3 +75,16 @@ La oprire:
 Brand inclus exact în structura:
 - `brand/icon.png`
 - `brand/icon@2x.png`
+
+
+## Fix icon v0.2.4
+
+Iconul a fost mutat în locația corectă pentru Home Assistant 2026.3+:
+
+`custom_components/tuya_sonoff_climate_bridge/brand/icon.png`
+
+și:
+
+`custom_components/tuya_sonoff_climate_bridge/brand/icon@2x.png`
+
+După update este necesar restart Home Assistant. Dacă interfața păstrează iconul vechi/placeholder, fă refresh complet al browserului.

@@ -106,3 +106,20 @@ working target on screen instead of showing the Sonoff frost value.
 - Adds repository branding:
   - `brand/icon.png` (256×256)
   - `brand/icon@2x.png` (512×512)
+
+
+## v0.2.4
+
+Brand asset path fixed for Home Assistant 2026.3+.
+
+Correct structure:
+
+```text
+custom_components/
+└── tuya_sonoff_climate_bridge/
+    └── brand/
+        ├── icon.png
+        └── icon@2x.png
+```
+
+The previous repository-root `brand/` folder was not the location used by Home Assistant for local custom-integration branding.
