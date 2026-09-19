@@ -229,11 +229,11 @@ class ClimateBridgeController:
             await self._save_state()
 
             # A user may change Moes target while OFF. Keep that new value as the
-            # next working_target, keep Sonoff OFF, then optionally restore the
-            # visual frost value on Moes.
+            # next working_target, keep Sonoff OFF, then restore the learned frost
+            # value visually on Moes (if enabled).
             await self._set_all_sonoff_off()
             if self.mirror_frost_to_moes:
-                await self._mirror_current_frost_to_moes()
+                await self._set_moes_off_and_mirror_frost()
             return
 
         if new_mode == MODE_HEAT:
@@ -358,11 +358,26 @@ class ClimateBridgeController:
             if manual_mode:
                 self._desired_mode = MODE_OFF
                 await self._save_state()
-                await self._set_moes_off()
+
+                # Important ordering:
+                # 1. Moes OFF
+                # 2. wait until Moes really reports OFF
+                # 3. mirror the learned Sonoff frost target to Moes
+                # 4. turn peer Sonoff valves OFF
+                await self._set_moes_off_and_mirror_frost(
+                    preferred_entity=entity_id
+                )
                 await self._set_peer_sonoff_off(entity_id)
 
-            # If OFF target changed manually (for example frost 7 -> 10 in
-            # eWeLink), we only learn/mirror frost. No heating target propagation.
+            elif self.mirror_frost_to_moes and self._desired_mode == MODE_OFF:
+                # OFF target changed while already OFF, e.g. 7 -> 10.
+                # Mirror the new frost value visually to Moes.
+                await self._set_moes_off_and_mirror_frost(
+                    preferred_entity=entity_id
+                )
+
+            # Any target seen while OFF is frost only. Never propagate it as
+            # working_target.
             return
 
         if new_mode != MODE_HEAT:
@@ -601,6 +616,36 @@ class ClimateBridgeController:
 
     async def _set_moes_off(self) -> None:
         await self._set_moes_mode(MODE_OFF)
+
+    async def _set_moes_off_and_mirror_frost(
+        self,
+        preferred_entity: str | None = None,
+    ) -> None:
+        """Turn Moes OFF, wait for confirmation, then mirror Sonoff frost."""
+        await self._set_moes_mode(MODE_OFF)
+
+        # Service completion does not always mean the entity state has already
+        # changed. Wait briefly for the actual OFF state before changing the
+        # visible target.
+        deadline = monotonic() + 5.0
+        while monotonic() < deadline:
+            state = self.hass.states.get(self.thermostat)
+            if state is not None and state.state == MODE_OFF:
+                break
+            await asyncio.sleep(0.10)
+
+        if not self.mirror_frost_to_moes:
+            return
+        if self._desired_mode != MODE_OFF:
+            return
+
+        frost = self._display_frost_target(preferred_entity)
+        if frost is None:
+            return
+
+        # Moes is safe to receive a target while OFF. Mark this as expected so
+        # the visual frost value can never overwrite working_target.
+        await self._set_moes_target(frost)
 
     async def _set_moes_mode(self, mode: str) -> None:
         state = self.hass.states.get(self.thermostat)

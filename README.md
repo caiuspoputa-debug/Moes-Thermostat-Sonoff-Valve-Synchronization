@@ -2,7 +2,7 @@
 
 Home Assistant custom integration for safe bidirectional synchronization between a Moes/Tuya thermostat and one or more Sonoff TRVZB radiator valves.
 
-## v0.2.0
+## v0.2.2
 
 This version adds dynamic frost-target handling and optional visual OFF synchronization.
 
@@ -64,7 +64,28 @@ For multi-valve zones, the first selected Sonoff valve is used as the preferred 
 ## HACS
 
 1. Add this repository to HACS as a custom **Integration** repository.
-2. Install release `v0.2.0`.
+2. Install release `v0.2.2`.
 3. Restart Home Assistant.
 4. Open **Settings → Devices & services → Tuya ↔ Sonoff Climate Bridge**.
 5. Configure one entry per zone.
+
+
+### v0.2.2 fix
+
+Fixed OFF visual synchronization ordering:
+
+```text
+Sonoff -> OFF
+Moes -> OFF
+wait until Moes reports OFF
+Moes target -> learned Sonoff frost target (7°C / 10°C / etc.)
+```
+
+This fixes the case where Moes successfully turned OFF but kept the previous
+working target on screen instead of showing the Sonoff frost value.
+
+
+## Project assets
+
+- `icon.png` included in the repository root
+- `custom_components/tuya_sonoff_climate_bridge/icon.png` included inside the integration package
