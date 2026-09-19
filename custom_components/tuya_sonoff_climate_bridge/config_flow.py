@@ -12,10 +12,12 @@ from homeassistant.helpers import selector
 
 from .const import (
     CONF_FROST_TEMP,
+    CONF_MIRROR_FROST_TO_MOES,
     CONF_THERMOSTAT,
     CONF_VALVES,
     CONF_ZONE_NAME,
     DEFAULT_FROST_TEMP,
+    DEFAULT_MIRROR_FROST_TO_MOES,
     DOMAIN,
 )
 
@@ -47,12 +49,19 @@ def _schema(defaults: dict[str, Any] | None = None) -> vol.Schema:
                 selector.EntitySelectorConfig(domain="climate", multiple=True)
             ),
             vol.Optional(
+                CONF_MIRROR_FROST_TO_MOES,
+                default=defaults.get(
+                    CONF_MIRROR_FROST_TO_MOES,
+                    DEFAULT_MIRROR_FROST_TO_MOES,
+                ),
+            ): selector.BooleanSelector(),
+            vol.Optional(
                 CONF_FROST_TEMP,
                 default=defaults.get(CONF_FROST_TEMP, DEFAULT_FROST_TEMP),
             ): selector.NumberSelector(
                 selector.NumberSelectorConfig(
                     min=4.0,
-                    max=12.0,
+                    max=15.0,
                     step=0.5,
                     mode=selector.NumberSelectorMode.BOX,
                     unit_of_measurement="°C",

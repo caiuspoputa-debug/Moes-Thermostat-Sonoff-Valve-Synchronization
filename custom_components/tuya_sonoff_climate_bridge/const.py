@@ -6,8 +6,11 @@ CONF_ZONE_NAME = "zone_name"
 CONF_THERMOSTAT = "thermostat"
 CONF_VALVES = "valves"
 CONF_FROST_TEMP = "frost_temperature"
+CONF_MIRROR_FROST_TO_MOES = "mirror_frost_to_moes"
 
+# Used only as a fallback before the real OFF target has been observed.
 DEFAULT_FROST_TEMP = 7.0
+DEFAULT_MIRROR_FROST_TO_MOES = False
 
 MODE_OFF = "off"
 MODE_HEAT = "heat"

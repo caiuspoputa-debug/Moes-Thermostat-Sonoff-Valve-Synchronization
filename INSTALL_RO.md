@@ -1,58 +1,35 @@
-# Instalare – Tuya ↔ Sonoff Climate Bridge v0.1.0 TEST
+# Instalare / Update – v0.2.0 TEST
 
-## Instalare prin HACS
+## Ce este nou
 
-1. În HACS, adaugă repository-ul:
-   `caiuspoputa-debug/Moes-Thermostat-Sonoff-Valve-Synchronization`
-   ca tip **Integration**.
-2. Descarcă versiunea `v0.1.0`.
-3. Repornește Home Assistant.
-4. Mergi la:
-   **Settings → Devices & services → Add integration**
-5. Caută:
-   **Tuya ↔ Sonoff Climate Bridge**
-6. Creează câte o asociere pentru fiecare zonă.
+- Orice temperatură raportată de Sonoff cât valva este `off` este considerată temperatură anti-îngheț.
+- Valoarea poate fi 7°C, 10°C sau alta; nu mai este hardcodată ca temperatură de lucru.
+- Integrarea învață valoarea anti-îngheț reală pentru fiecare Sonoff.
+- Opțiune nouă:
+  **Afișează pe Moes temperatura anti-îngheț Sonoff când este OPRIT**.
+- `working_target` este salvat persistent și este restaurat la pornire.
+- Temperatura anti-îngheț nu poate suprascrie `working_target`.
 
-## Configurare
+## Update prin HACS
 
-Pentru fiecare zonă alegi din UI:
+1. Publică fișierele acestei arhive în repository.
+2. Creează release/tag `v0.2.0`.
+3. În HACS actualizează integrarea la `v0.2.0`.
+4. Repornește Home Assistant.
+5. Intră la integrare → **Configure** și activează opțiunea de sincronizare vizuală dacă o dorești.
 
-- numele zonei;
-- termostatul Moes/Tuya;
-- una sau mai multe valve Sonoff TRVZB;
-- temperatura anti-îngheț Sonoff (implicit 7°C).
+## Test recomandat
 
-Exemplu pentru test:
+Pentru prima zonă:
 
 - Moes: `climate.th_dormitor`
 - Sonoff test: `climate.sonoff_a48011e07b`
 
-## Reguli de siguranță implementate
+Testează în această ordine:
 
-- Sincronizare bidirecțională ON/OFF.
-- Sincronizare bidirecțională a temperaturii de lucru.
-- Dacă Sonoff este `off`, integrarea NU execută `climate.set_temperature`.
-- La pornirea Sonoff:
-  1. trimite `set_hvac_mode("heat")`;
-  2. așteaptă confirmarea `heat`;
-  3. ignoră starea tranzitorie `heat / 7°C`;
-  4. apoi aplică temperatura de lucru.
-- La oprirea Sonoff, temperatura de 7°C nu este propagată către Moes.
-- Integrarea păstrează separat `working_target`.
-- Sunt filtrate confirmările proprii pentru a evita buclele Moes ↔ Sonoff.
-
-## Instalare manuală
-
-Copiază folderul:
-
-`custom_components/tuya_sonoff_climate_bridge`
-
-în:
-
-`/config/custom_components/tuya_sonoff_climate_bridge`
-
-și repornește Home Assistant.
-
-## Important
-
-Aceasta este o versiune de test. Prima validare se face cu o singură pereche Moes ↔ Sonoff înainte de configurarea tuturor zonelor.
+1. HEAT la o temperatură normală.
+2. OFF.
+3. Confirmă că Sonoff raportează frost target.
+4. Dacă opțiunea este activă, confirmă că Moes afișează aceeași valoare în OFF.
+5. Pornește din nou HEAT și confirmă restaurarea `working_target`.
+6. Modifică frost target-ul Sonoff, de exemplu 7°C → 10°C, cât este OFF; confirmă că Moes îl oglindește doar vizual și că la pornire revine temperatura de lucru memorată.

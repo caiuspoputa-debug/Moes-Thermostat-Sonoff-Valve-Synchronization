@@ -9,7 +9,12 @@
           "zone_name": "Nume zonă",
           "thermostat": "Termostat Moes / Tuya",
           "valves": "Valvă/valve Sonoff TRVZB",
-          "frost_temperature": "Temperatură anti-îngheț Sonoff"
+          "mirror_frost_to_moes": "Afișează pe Moes temperatura anti-îngheț Sonoff când este OPRIT",
+          "frost_temperature": "Temperatură anti-îngheț de rezervă"
+        },
+        "data_description": {
+          "mirror_frost_to_moes": "Dacă este activat, Moes afișează aceeași temperatură anti-îngheț ca Sonoff în OFF. Temperatura reală de lucru este memorată separat și restaurată la pornire.",
+          "frost_temperature": "Se folosește doar până când integrarea învață valoarea anti-îngheț reală raportată de Sonoff în OFF."
         }
       }
     },
@@ -25,12 +30,17 @@
     "step": {
       "init": {
         "title": "Modifică zona termostat / TRV",
-        "description": "Poți schimba termostatul, valvele asociate, numele zonei sau temperatura anti-îngheț.",
+        "description": "Poți schimba termostatul, valvele asociate, numele zonei și sincronizarea vizuală în OFF.",
         "data": {
           "zone_name": "Nume zonă",
           "thermostat": "Termostat Moes / Tuya",
           "valves": "Valvă/valve Sonoff TRVZB",
-          "frost_temperature": "Temperatură anti-îngheț Sonoff"
+          "mirror_frost_to_moes": "Afișează pe Moes temperatura anti-îngheț Sonoff când este OPRIT",
+          "frost_temperature": "Temperatură anti-îngheț de rezervă"
+        },
+        "data_description": {
+          "mirror_frost_to_moes": "Dacă este activat, Moes afișează aceeași temperatură anti-îngheț ca Sonoff în OFF. Temperatura reală de lucru este memorată separat și restaurată la pornire.",
+          "frost_temperature": "Se folosește doar până când integrarea învață valoarea anti-îngheț reală raportată de Sonoff în OFF."
         }
       }
     },

@@ -9,7 +9,12 @@
           "zone_name": "Zone name",
           "thermostat": "Moes / Tuya thermostat",
           "valves": "Sonoff TRVZB valve(s)",
-          "frost_temperature": "Sonoff frost temperature"
+          "mirror_frost_to_moes": "Mirror Sonoff frost target on Moes while OFF",
+          "frost_temperature": "Fallback frost temperature"
+        },
+        "data_description": {
+          "mirror_frost_to_moes": "When enabled, Moes shows the Sonoff frost target while the zone is OFF. The real working target is stored separately and restored when heating starts.",
+          "frost_temperature": "Used only before the real Sonoff OFF/frost target has been learned."
         }
       }
     },
@@ -25,12 +30,17 @@
     "step": {
       "init": {
         "title": "Edit thermostat / TRV zone",
-        "description": "Change the thermostat, linked valves, zone name or frost temperature.",
+        "description": "Change the thermostat, linked valves, zone name or frost-display behavior.",
         "data": {
           "zone_name": "Zone name",
           "thermostat": "Moes / Tuya thermostat",
           "valves": "Sonoff TRVZB valve(s)",
-          "frost_temperature": "Sonoff frost temperature"
+          "mirror_frost_to_moes": "Mirror Sonoff frost target on Moes while OFF",
+          "frost_temperature": "Fallback frost temperature"
+        },
+        "data_description": {
+          "mirror_frost_to_moes": "When enabled, Moes shows the Sonoff frost target while the zone is OFF. The real working target is stored separately and restored when heating starts.",
+          "frost_temperature": "Used only before the real Sonoff OFF/frost target has been learned."
         }
       }
     },

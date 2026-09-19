@@ -1,107 +1,70 @@
 # Moes Thermostat – Sonoff Valve Synchronization
 
-Home Assistant custom integration for bidirectional synchronization between a Moes/Tuya thermostat and one or more Sonoff TRVZB radiator valves.
+Home Assistant custom integration for safe bidirectional synchronization between a Moes/Tuya thermostat and one or more Sonoff TRVZB radiator valves.
 
-## What it does
+## v0.2.0
 
-- Synchronizes HVAC mode in both directions.
-- Synchronizes target temperature in both directions.
-- Supports one Moes thermostat controlling one or more Sonoff TRVZB valves.
-- Keeps the Sonoff frost-protection temperature separate from the normal working target.
-- Never sends `climate.set_temperature` to a Sonoff TRVZB while that valve is `off`.
-- Waits for the Sonoff valve to confirm `heat` before sending the working target.
-- Ignores the temporary Sonoff `heat / 7°C` transition seen during startup.
-- Includes anti-loop protection so bridge-generated confirmations are not treated as new user commands.
+This version adds dynamic frost-target handling and optional visual OFF synchronization.
 
-## Verified behavior
+### New behavior
 
-### Moes thermostat
+- **Any Sonoff target reported while that Sonoff is `off` is treated as frost target**, regardless of whether it is 7°C, 10°C or another configured value.
+- The frost target is learned dynamically per Sonoff valve and is never accepted as `working_target`.
+- Optional **Mirror Sonoff frost target on Moes while OFF** setting.
+- When visual mirroring is enabled:
+  - both devices can show the same frost value while OFF;
+  - the real heating target is stored separately;
+  - the real target is restored automatically when heating starts.
+- `working_target` and learned frost targets are persisted across Home Assistant restarts.
+- If the user changes the Moes target while OFF, that becomes the next heating target; with visual mirroring enabled, the display then returns to the frost value while remaining OFF.
 
-- The target temperature remains valid while the thermostat is `off`.
-- Changing the target while `off` does not automatically enable heating.
-- `hvac_action` may be unavailable while the thermostat is in `heat`, so the bridge uses HVAC mode as the primary state.
+## Core safety rule
 
-### Sonoff TRVZB
+The bridge **never calls `climate.set_temperature` on a Sonoff valve while that valve is `off`**.
 
-When the valve is `off`, Home Assistant reports the frost-protection target (typically 7°C), not the normal working target.
-
-Observed startup sequence:
+Safe Sonoff start sequence:
 
 ```text
-off / 7°C
-→ heat / 7°C
-→ heat / restored target
-→ heating
+OFF
+→ set_hvac_mode("heat")
+→ wait for confirmed HEAT
+→ ignore temporary HEAT/frost target
+→ wait for restored working target
+→ set desired working target
 ```
 
-Observed shutdown sequence:
+## Bidirectional behavior
 
-```text
-heat / working target
-→ off / working target
-→ off / 7°C
-→ action off
-```
+### Moes → Sonoff
 
-The bridge therefore keeps its own working target and never treats the Sonoff frost value as the normal heating setpoint.
+- Moes OFF → Sonoff OFF.
+- Moes HEAT → safely start Sonoff, then apply working target.
+- Moes target change in HEAT → Sonoff target change.
+- Moes target change in OFF → save as next `working_target`; Sonoff stays OFF.
+
+### Sonoff → Moes
+
+- Sonoff HEAT target change → Moes receives the new working target.
+- Sonoff OFF → Moes OFF.
+- Sonoff OFF target change (for example frost 7°C → 10°C) → learned as frost only; never propagated as working target.
+- Sonoff OFF → HEAT → wait until a non-frost target appears before propagating it.
 
 ## Configuration
 
-Each bridge entry is configured from the Home Assistant UI:
+Each bridge entry has:
 
 - Zone name
 - One Moes/Tuya climate entity
 - One or more Sonoff TRVZB climate entities
-- Sonoff frost-protection temperature (default: 7°C)
+- **Mirror Sonoff frost target on Moes while OFF** (optional)
+- Fallback frost temperature (used only until the real OFF value is learned)
 
-This makes it possible to create several room mappings without editing YAML.
+For multi-valve zones, the first selected Sonoff valve is used as the preferred visual frost source.
 
-Example:
+## HACS
 
-```text
-Dormitor:
-  climate.th_dormitor
-    ↔ climate.sonoff_a48011e039
-
-Salon:
-  climate.th_salon
-    ↔ climate.sonoff_xxxxx1
-    ↔ climate.sonoff_xxxxx2
-```
-
-## Installation with HACS
-
-1. Add this repository to HACS as a custom repository of type **Integration**.
-2. Download the latest release.
+1. Add this repository to HACS as a custom **Integration** repository.
+2. Install release `v0.2.0`.
 3. Restart Home Assistant.
-4. Go to **Settings → Devices & services → Add integration**.
-5. Search for **Tuya ↔ Sonoff Climate Bridge**.
-6. Select the Moes thermostat and the Sonoff TRVZB valve(s) for the zone.
-
-## Manual installation
-
-Copy:
-
-```text
-custom_components/tuya_sonoff_climate_bridge
-```
-
-to:
-
-```text
-/config/custom_components/tuya_sonoff_climate_bridge
-```
-
-Then restart Home Assistant.
-
-## Test status
-
-Current version: **v0.1.0 test**
-
-The first test should be performed with a single Moes thermostat and a single Sonoff TRVZB valve before expanding to all zones.
-
-## Safety rule
-
-The bridge must never call `climate.set_temperature` on a Sonoff TRVZB while that valve is `off`.
-
-The Sonoff value shown while off (normally 7°C) is treated as frost protection, not as the normal working setpoint.
+4. Open **Settings → Devices & services → Tuya ↔ Sonoff Climate Bridge**.
+5. Configure one entry per zone.
