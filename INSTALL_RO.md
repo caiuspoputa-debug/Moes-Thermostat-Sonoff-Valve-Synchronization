@@ -1,66 +1,58 @@
-# Tuya ↔ Sonoff Climate Bridge v0.1.0 TEST
+# Instalare – Tuya ↔ Sonoff Climate Bridge v0.1.0 TEST
 
-## Ce este această versiune
-Prima versiune de test a bridge-ului bidirecțional dintre un termostat Moes/Tuya și una sau mai multe valve Sonoff TRVZB.
+## Instalare prin HACS
 
-### Regula critică implementată
-Cât timp o valvă Sonoff este `off`, integrarea NU execută niciodată `climate.set_temperature` pe acea valvă.
+1. În HACS, adaugă repository-ul:
+   `caiuspoputa-debug/Moes-Thermostat-Sonoff-Valve-Synchronization`
+   ca tip **Integration**.
+2. Descarcă versiunea `v0.1.0`.
+3. Repornește Home Assistant.
+4. Mergi la:
+   **Settings → Devices & services → Add integration**
+5. Caută:
+   **Tuya ↔ Sonoff Climate Bridge**
+6. Creează câte o asociere pentru fiecare zonă.
 
-Pornirea unei valve este:
-1. `climate.set_hvac_mode(..., heat)`
-2. așteaptă confirmarea `state == heat`
-3. tolerează starea tranzitorie `heat / 7°C`
-4. așteaptă restaurarea targetului intern al Sonoff (maxim ~5.5 s)
-5. doar apoi trimite temperatura de lucru dorită
+## Configurare
 
-La oprire trimite numai `set_hvac_mode(off)`.
+Pentru fiecare zonă alegi din UI:
 
-## Asocierea dispozitivelor
-Integrarea este instalată o singură dată. Fiecare config entry reprezintă o cameră/zonă.
+- numele zonei;
+- termostatul Moes/Tuya;
+- una sau mai multe valve Sonoff TRVZB;
+- temperatura anti-îngheț Sonoff (implicit 7°C).
 
-În UI alegi din dropdown:
-- numele zonei
-- termostatul Moes/Tuya
-- una sau mai multe valve Sonoff TRVZB
-- frost temperature Sonoff (implicit 7°C)
+Exemplu pentru test:
 
-Pentru cele 4 termostate, adaugi integrarea de 4 ori și faci cele 4 asocieri. Nu modifici codul.
+- Moes: `climate.th_dormitor`
+- Sonoff test: `climate.sonoff_a48011e07b`
 
-## Instalare
-1. Copiază folderul:
-   `custom_components/tuya_sonoff_climate_bridge`
-   în:
-   `/config/custom_components/`
-2. Repornește Home Assistant.
-3. Settings → Devices & services → Add integration.
-4. Caută `Tuya ↔ Sonoff Climate Bridge`.
-5. Pentru primul test selectează:
-   - Moes: `climate.th_dormitor`
-   - Sonoff test: `climate.sonoff_a48011e07b`
-   - Frost: `7.0`
-6. Salvează.
+## Reguli de siguranță implementate
 
-Important: la încărcarea integrării NU se trimit comenzi inițiale către dispozitive. Sincronizarea începe la prima schimbare reală făcută după setup.
+- Sincronizare bidirecțională ON/OFF.
+- Sincronizare bidirecțională a temperaturii de lucru.
+- Dacă Sonoff este `off`, integrarea NU execută `climate.set_temperature`.
+- La pornirea Sonoff:
+  1. trimite `set_hvac_mode("heat")`;
+  2. așteaptă confirmarea `heat`;
+  3. ignoră starea tranzitorie `heat / 7°C`;
+  4. apoi aplică temperatura de lucru.
+- La oprirea Sonoff, temperatura de 7°C nu este propagată către Moes.
+- Integrarea păstrează separat `working_target`.
+- Sunt filtrate confirmările proprii pentru a evita buclele Moes ↔ Sonoff.
 
-## Ce sincronizează v0.1.0
-### Moes → Sonoff
-- target modificat în Moes OFF: memorează targetul; Sonoff rămâne OFF
-- Moes OFF → HEAT: pornește Sonoff în siguranță, apoi trimite targetul
-- target modificat în Moes HEAT: trimite targetul către Sonoff
-- Moes HEAT → OFF: oprește Sonoff fără temperatură
+## Instalare manuală
 
-### Sonoff → Moes
-- target modificat în Sonoff HEAT: trimite targetul către Moes
-- Sonoff HEAT → OFF: oprește Moes și celelalte valve ale zonei
-- Sonoff OFF → HEAT / 7°C: NU trimite 7°C către Moes; așteaptă targetul real
-- după apariția targetului real: actualizează Moes și celelalte valve ale zonei
+Copiază folderul:
 
-## Limitări deliberate în v0.1.0
-- Sunt sincronizate numai modurile `off` și `heat`.
-- `auto` nu este propagat încă, fiindcă nu l-am caracterizat prin teste.
-- `hvac_action` nu este folosit pentru decizia ON/OFF.
-- Nu aplică factor ×5/÷5. Bridge-ul folosește valorile deja normalizate din `climate.th_*`.
+`custom_components/tuya_sonoff_climate_bridge`
 
-## Loguri
-Integrarea scrie temporar mesaje la nivel WARNING pentru ca testele să fie ușor de urmărit în Settings → System → Logs.
-Caută `tuya_sonoff_climate_bridge` sau mesajele care încep cu numele zonei.
+în:
+
+`/config/custom_components/tuya_sonoff_climate_bridge`
+
+și repornește Home Assistant.
+
+## Important
+
+Aceasta este o versiune de test. Prima validare se face cu o singură pereche Moes ↔ Sonoff înainte de configurarea tuturor zonelor.

@@ -3,7 +3,11 @@
   "name": "Tuya ↔ Sonoff Climate Bridge",
   "version": "0.1.0",
   "config_flow": true,
-  "codeowners": [],
+  "codeowners": [
+    "@caiuspoputa-debug"
+  ],
+  "documentation": "https://github.com/caiuspoputa-debug/Moes-Thermostat-Sonoff-Valve-Synchronization",
+  "issue_tracker": "https://github.com/caiuspoputa-debug/Moes-Thermostat-Sonoff-Valve-Synchronization/issues",
   "integration_type": "service",
   "iot_class": "local_push"
 }
