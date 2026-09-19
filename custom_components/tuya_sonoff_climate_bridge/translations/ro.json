@@ -1,0 +1,42 @@
+{
+  "title": "Bridge Climatizare Tuya ↔ Sonoff",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Adaugă zonă termostat / TRV",
+        "description": "Selectează un termostat Moes/Tuya și una sau mai multe valve Sonoff TRVZB. Pentru fiecare cameră/zonă suplimentară adaugă din nou integrarea.",
+        "data": {
+          "zone_name": "Nume zonă",
+          "thermostat": "Termostat Moes / Tuya",
+          "valves": "Valvă/valve Sonoff TRVZB",
+          "frost_temperature": "Temperatură anti-îngheț Sonoff"
+        }
+      }
+    },
+    "error": {
+      "same_entity": "Termostatul nu poate fi selectat și ca valvă.",
+      "no_valves": "Selectează cel puțin o valvă Sonoff."
+    },
+    "abort": {
+      "already_configured": "Acest termostat este deja configurat într-o zonă bridge."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Modifică zona termostat / TRV",
+        "description": "Poți schimba termostatul, valvele asociate, numele zonei sau temperatura anti-îngheț.",
+        "data": {
+          "zone_name": "Nume zonă",
+          "thermostat": "Termostat Moes / Tuya",
+          "valves": "Valvă/valve Sonoff TRVZB",
+          "frost_temperature": "Temperatură anti-îngheț Sonoff"
+        }
+      }
+    },
+    "error": {
+      "same_entity": "Termostatul nu poate fi selectat și ca valvă.",
+      "no_valves": "Selectează cel puțin o valvă Sonoff."
+    }
+  }
+}

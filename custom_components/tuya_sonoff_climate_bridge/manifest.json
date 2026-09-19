@@ -1,0 +1,9 @@
+{
+  "domain": "tuya_sonoff_climate_bridge",
+  "name": "Tuya ↔ Sonoff Climate Bridge",
+  "version": "0.1.0",
+  "config_flow": true,
+  "codeowners": [],
+  "integration_type": "service",
+  "iot_class": "local_push"
+}

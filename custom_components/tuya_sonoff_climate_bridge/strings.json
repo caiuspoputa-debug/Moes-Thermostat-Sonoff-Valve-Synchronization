@@ -1,0 +1,42 @@
+{
+  "title": "Tuya ↔ Sonoff Climate Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add thermostat / TRV zone",
+        "description": "Select one Moes/Tuya thermostat and one or more Sonoff TRVZB valves. Add the integration again for each additional room/zone.",
+        "data": {
+          "zone_name": "Zone name",
+          "thermostat": "Moes / Tuya thermostat",
+          "valves": "Sonoff TRVZB valve(s)",
+          "frost_temperature": "Sonoff frost temperature"
+        }
+      }
+    },
+    "error": {
+      "same_entity": "The thermostat cannot also be selected as a valve.",
+      "no_valves": "Select at least one Sonoff valve."
+    },
+    "abort": {
+      "already_configured": "This thermostat is already configured in a bridge zone."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit thermostat / TRV zone",
+        "description": "Change the thermostat, linked valves, zone name or frost temperature.",
+        "data": {
+          "zone_name": "Zone name",
+          "thermostat": "Moes / Tuya thermostat",
+          "valves": "Sonoff TRVZB valve(s)",
+          "frost_temperature": "Sonoff frost temperature"
+        }
+      }
+    },
+    "error": {
+      "same_entity": "The thermostat cannot also be selected as a valve.",
+      "no_valves": "Select at least one Sonoff valve."
+    }
+  }
+}
