@@ -123,3 +123,15 @@ custom_components/
 ```
 
 The previous repository-root `brand/` folder was not the location used by Home Assistant for local custom-integration branding.
+
+
+## v0.2.5
+
+Startup/persistent-state cleanup:
+
+- `Bridge started` is now logged at INFO instead of WARNING.
+- A persisted `working_target` that matches a learned Sonoff frost target is invalidated automatically.
+- Old contaminated values such as 7°C or 10°C are cleared from persistent storage when they match known frost targets.
+- Historical learned frost targets are also considered during cleanup, so changing Sonoff frost protection later does not preserve an old contaminated working target.
+- No replacement working temperature is guessed.
+- If no valid working target exists, the bridge waits until a real Moes target or a valid Sonoff HEAT target is received.

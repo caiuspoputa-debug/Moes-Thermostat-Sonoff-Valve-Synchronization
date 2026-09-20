@@ -88,3 +88,15 @@ Iconul a fost mutat în locația corectă pentru Home Assistant 2026.3+:
 `custom_components/tuya_sonoff_climate_bridge/brand/icon@2x.png`
 
 După update este necesar restart Home Assistant. Dacă interfața păstrează iconul vechi/placeholder, fă refresh complet al browserului.
+
+
+## Fix v0.2.5
+
+- Mesajul `Bridge started` nu mai apare ca warning/error în Home Assistant Logs.
+- La pornire, integrarea verifică memoria persistentă.
+- Dacă `working_target` este egal cu o temperatură anti-îngheț Sonoff învățată
+  (de exemplu 7°C sau 10°C), valoarea este ștearsă automat.
+- Valoarea contaminată este eliminată și din storage, deci nu reapare după restart.
+- Integrarea NU inventează o temperatură de lucru în locul celei șterse.
+- Următoarea temperatură reală setată pe Moes sau observată valid în Sonoff HEAT
+  devine noul `working_target`.

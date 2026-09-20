@@ -88,40 +88,87 @@ class ClimateBridgeController:
     async def async_start(self) -> None:
         """Start listeners and restore bridge memory."""
         stored = await self._store.async_load() or {}
-        stored_target = stored.get("working_target")
-        if isinstance(stored_target, (int, float)):
-            self._working_target = float(stored_target)
+
+        # Keep every previously learned frost value during migration/cleanup.
+        # This lets us invalidate an old contaminated working_target even if the
+        # user has since changed Sonoff frost protection from e.g. 7°C to 10°C.
+        known_frost_values: set[float] = {float(self.frost_temp_fallback)}
 
         stored_frost = stored.get("frost_targets")
         if isinstance(stored_frost, dict):
             for entity_id, value in stored_frost.items():
                 if entity_id in self.valves and isinstance(value, (int, float)):
-                    self._frost_targets[entity_id] = float(value)
+                    frost = float(value)
+                    self._frost_targets[entity_id] = frost
+                    known_frost_values.add(frost)
 
-        # Learn current frost targets from live OFF states.
+        stored_target = stored.get("working_target")
+        if isinstance(stored_target, (int, float)):
+            candidate = float(stored_target)
+            if self._matches_frost_value(candidate, known_frost_values):
+                _LOGGER.info(
+                    "[%s] Clearing contaminated stored working_target=%s because "
+                    "it matches a learned/fallback frost target.",
+                    self.zone_name,
+                    candidate,
+                )
+                self._working_target = None
+            else:
+                self._working_target = candidate
+
+        # Learn current frost targets from live Sonoff OFF states.
         for valve in self.valves:
             state = self.hass.states.get(valve)
             if state is not None and state.state == MODE_OFF:
                 target = self._target(state)
                 if target is not None:
-                    self._frost_targets[valve] = target
+                    frost = float(target)
+                    self._frost_targets[valve] = frost
+                    known_frost_values.add(frost)
+
+        # Re-check after live states were learned. This is the important cleanup
+        # path for older versions that persisted 7°C/10°C as working_target.
+        if (
+            self._working_target is not None
+            and self._matches_frost_value(
+                self._working_target, known_frost_values
+            )
+        ):
+            _LOGGER.info(
+                "[%s] Clearing contaminated working_target=%s after learning "
+                "current Sonoff frost target(s)=%s.",
+                self.zone_name,
+                self._working_target,
+                sorted(known_frost_values),
+            )
+            self._working_target = None
 
         moes = self.hass.states.get(self.thermostat)
         if moes is not None:
             target = self._target(moes)
 
-            # With visual frost mirroring enabled, an OFF Moes target may be only
-            # the mirrored frost display. Never overwrite persisted working_target
-            # with it during restart/reload.
+            # When Moes is OFF and frost mirroring is enabled, its visible target
+            # is not a working target. When Moes is HEAT, accept the target only
+            # if it is not one of the known frost values.
             if target is not None:
-                if not (self.mirror_frost_to_moes and moes.state == MODE_OFF):
-                    self._working_target = target
-                elif self._working_target is None:
-                    _LOGGER.warning(
-                        "[%s] Started while Moes is OFF with frost mirroring enabled "
-                        "and no stored working_target. Waiting for a real user target "
-                        "or HEAT target before learning working_target.",
+                if self.mirror_frost_to_moes and moes.state == MODE_OFF:
+                    if self._working_target is None:
+                        _LOGGER.info(
+                            "[%s] Moes is OFF with frost mirroring enabled and "
+                            "there is no valid stored working_target yet. Waiting "
+                            "for a real user target or a valid HEAT target.",
+                            self.zone_name,
+                        )
+                elif not self._matches_frost_value(
+                    float(target), known_frost_values
+                ):
+                    self._working_target = float(target)
+                else:
+                    _LOGGER.info(
+                        "[%s] Ignoring Moes target=%s at startup because it "
+                        "matches a known frost target.",
                         self.zone_name,
+                        target,
                     )
 
             if moes.state in (MODE_OFF, MODE_HEAT):
@@ -132,8 +179,11 @@ class ClimateBridgeController:
             self.hass, entities, self._state_changed
         )
 
+        # Persist the cleaned value immediately so the old contaminated target
+        # does not return after the next Home Assistant restart.
         await self._save_state()
-        _LOGGER.warning(
+
+        _LOGGER.info(
             "[%s] Bridge started: thermostat=%s valves=%s working_target=%s "
             "mirror_frost_to_moes=%s frost_targets=%s. No startup command is sent; "
             "synchronization begins with the next real change.",
@@ -694,6 +744,17 @@ class ClimateBridgeController:
             None if state is None else state.state,
             self._target(state),
             frost,
+        )
+
+    @staticmethod
+    def _matches_frost_value(
+        value: float,
+        frost_values: set[float],
+    ) -> bool:
+        """Return True when value matches any known frost target."""
+        return any(
+            abs(float(value) - float(frost)) <= TARGET_TOLERANCE
+            for frost in frost_values
         )
 
     def _is_any_known_frost(self, value: float | None) -> bool:
